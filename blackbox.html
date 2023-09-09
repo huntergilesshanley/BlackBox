@@ -1,0 +1,1188 @@
+<!--
+
+TO-DO: Disable respective buttons if their inputs are invalid and indicate that clearly
+TO-DO: Group the equalities: 0 <= x, y, z <= 10
+TO-DO: Provide a way to make custom excercises
+
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>BlackBox</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.js" integrity="sha512-JLWfLWde2M173Tt7ju+tBz8OSzcfpCmkwK75AE2ErZYBWxN9143UWlIoHq8KrfBusmLu34d6SmHu3JwJHbufnw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+  <style>
+  
+  * {
+  box-sizing:border-box;
+  }
+  .Input_Box {
+  display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+    width: 100%;
+    
+  }
+  #Auxiliary {
+display: grid;
+grid-template-columns: 1fr 5fr;
+grid-template-rows: 1fr;
+grid-column-gap: 0px;
+grid-row-gap: 0px;
+
+
+  }
+  
+  #Guess_Result {
+  display: flex;
+    justify-content: center;
+    margin: 0;
+   
+  }
+  input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+button:hover {
+background: lightgray;
+}
+button {
+    background: white;
+    border-radius: 24px;
+    margin: 16px;
+    border: none;
+    outline-offset: 5px;
+    outline: 1px black solid;
+    cursor: pointer;
+    min-width: max-content;
+}
+
+.Input_Number:focus {
+ background: beige;
+  }
+  .Input_Number {
+  padding: 0px 1ch;
+    outline: none !important;
+    height: fit-content;
+    border: none;
+    width: 1ch;
+    border-bottom: 1px dashed #000;
+  box-sizing: content-box;
+  }
+  #Main {
+  display: flex;
+  flex-direction: row;
+      justify-content: space-around;
+  }
+  
+  #Coefficients {
+    display: flex;
+     flex-direction: column;
+      justify-content: space-around;
+      gap: 3ch;
+  }
+ 
+  .Arena_Of_Main {
+  width: 100%;
+ flex-direction: column;
+    display: flex;
+    justify-content: flex-start;
+     height: 100%;
+     gap: 20px;
+    align-items: center;
+  }
+   
+  #Coefficients_And_Guess_Wrapper{
+   display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 20px;
+    
+
+}
+
+body {
+margin: 0;
+}
+select {
+outline: 1px black solid;
+    background: none;
+    outline-offset: 5px;
+    border: none;
+}
+
+#Formula_Display {
+position: fixed;
+top: 0;
+pointer-events: none;
+width: 100%;
+align-items: center;
+display: flex;
+justify-content: center;
+gap: 20px;
+}
+
+#Buttons_Group {
+display: flex;
+flex-direction: row;
+align-items: center;
+justify-content: center;
+}
+
+.Reveal_Button {
+border-radius: 0;
+}
+input:disabled {
+cursor: not-allowed;
+border-color: lightgray;
+}
+button:disabled {
+cursor: not-allowed;
+outline-color: lightgray;
+}
+button:disabled:hover {
+background: initial;
+
+}
+#Controls_Wrapper {
+float: right;
+display: inline-block;
+}
+
+#Change_Formula_Select_Wrapper {
+
+padding: 16px;
+    display: inline-flex;
+    gap: 40px;
+}
+
+.Comma_Element {
+margin-right: 10px;
+}
+
+.Input_Number_Side {
+width: auto;
+}
+
+
+#Input_Arena_Wrapper {
+width: 100%;
+display: flex;
+justify-content: center;
+position: relative;
+}
+
+
+
+#New_Game_Button, #Reveal_Answers_Button {
+border-radius: 0;
+}
+
+.Button_Contents {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+#Guess_Result_Wrapper {
+display: flex;
+ flex-direction: row;
+ filter: opacity(0);
+     align-items: center;
+}
+.material-icons {
+font-size: unset;
+}
+
+.Coefficient_Element {
+position: relative;
+align-items: center;
+display: flex;
+}
+
+.Coefficient_Result_Element {
+position: absolute;
+    right: 5%;
+    top: 10%;
+    
+    /* I heard you hate magic numbers, Hunter */
+
+}
+
+
+.Formula_Guess_Element {
+display: flex;
+    align-items: center
+}
+p {
+padding: 0;
+}
+
+#Temporary_Invisible_Select_For_Sizing {
+filter: opacity(0);
+}
+  </style>
+</head>
+<body>
+
+<div id="Change_Formula_Select_Wrapper">
+<select id="Change_Formula_Select">
+</select>
+<select id="Change_BlackBox_Argument_Number_Select">
+</select>
+<select id="Temporary_Invisible_Select_For_Sizing">
+  <option id="Invisible_Option"></option>
+</select>
+</div>
+
+<div id="Controls_Wrapper">
+<button id="New_Game_Button"><div class="Button_Contents">New Game<span class="material-icons">&#xe5d5</span></div></button>
+<button id="Reveal_Answers_Button"><div class="Button_Contents"><span id="Reveal_Answers_Button_Contents"></span><span class="material-icons">&#xe8f4</span></div></button>
+</div>
+<div id="Formula_Display">
+
+  </div>
+
+
+
+<div id="Main">
+  <div id="Input_Arena_Wrapper">
+      <div id="Hack_Spacer_Element_Arena">
+  </div>
+  <div class="Input_Arena_Secondary_Wrapper" id="Input_Arena_Secondary_Wrapper">
+
+  <div id="Input_Arena">
+  </div>
+  
+
+  </div>
+  </div>
+  
+  
+  
+  <div class="Arena_Of_Main">
+  <div id="Coefficients_And_Guess_Wrapper">
+    <div id="Coefficients">
+    
+    </div>
+    
+    
+     
+    <div id="Buttons_Group">
+    <button id="Guess_Button"><div class="Button_Contents">Submit Guess</div></button>
+    </div>
+       </div>
+       
+      <div id="Guess_Result_Wrapper">
+    <p id="Guess_Result">&nbsp;</p>&nbsp;&mdash;&nbsp;<p id="Guess_Result_Percentage">&nbsp;</p>
+  </div>
+  
+  
+  </div>
+</div>
+
+
+<script>
+MathJax.startup= {
+         typeset: false
+     }
+let Formulae_Array = [
+{
+Name: 'Entry-level',
+Coefficients: [
+{Name: 'a', Minimum: 1, Maximum: 10},
+{Name: 'b', Minimum: 1, Maximum: 10}
+],
+Inputs: ['x'],
+MathJAX: 'f(x) = ax + b',
+Evaluate_Function: function (X, A, B) {
+return A * X + B;
+}
+},
+
+{
+Name: 'Quadratic',
+Coefficients: [
+{Name: 'a', Minimum: 1, Maximum: 10},
+{Name: 'b', Minimum: 1, Maximum: 10},
+{Name: 'c', Minimum: 1, Maximum: 10}
+],
+Inputs: ['x'],
+MathJAX: 'f(x) = ax^2 + bx + c',
+Evaluate_Function: (X, A, B, C) => {
+return A * Math.pow(X, 2) + B * X + C;
+}
+},
+
+{
+Name: 'Multi-input',
+Coefficients: [
+{Name: 'a', Minimum: 1, Maximum: 10},
+{Name: 'b', Minimum: 1, Maximum: 10},
+{Name: 'c', Minimum: 1, Maximum: 10}
+],
+Inputs: ['x', 'y', 'z'],
+MathJAX: 'f(x, y, z) = ax^2 + by + z^c',
+Evaluate_Function: function (X, Y, Z, A, B, C) {
+console.log(arguments);
+return A * Math.pow(X, 2) + B * Y + Math.pow(Z, C);
+}
+},
+
+{
+Name: 'Iterative',
+Coefficients: [
+{Name: 'a', Minimum: 1, Maximum: 10},
+{Name: 'b', Minimum: 1, Maximum: 10},
+{Name: 'c', Minimum: 1, Maximum: 10},
+{Name: 'd', Minimum: 1, Maximum: 10},
+{Name: 'e', Minimum: 1, Maximum: 10}
+],
+Inputs: ['v', 'w', 'x', 'y', 'z'],
+MathJAX: 'f(x) = va + wb + cx + dy + ez',
+Evaluate_Function: function (V, W, X, Y, Z, A, B, C, D, E) {
+return V * A + W * B + C * X + D * Y + E * Z;
+}
+}
+];
+
+function Random_Integer(Minimum, Maximum) {
+  Minimum = Math.ceil(Minimum);
+  Maximum = Math.floor(Maximum);
+  return Math.floor(Math.random() * (Maximum - Minimum) + Minimum);
+}
+
+// FIX THIS  vvvvvv
+function Generate_Random_Function(numArguments) {
+  const coefficients = [2, 3, 4, 5];
+  const arguments = ['x', 'y', 'z', 'u', 'v', 'w'];
+  
+  // Randomly choose the number of coefficients and arguments
+  const numCoefficients = Math.floor(Math.random() * 3) + 1;
+  
+  // Randomly select coefficients and arguments
+  const selectedCoefficients = coefficients.slice(0, numCoefficients);
+  const selectedArguments = arguments.slice(0, numArguments);
+  
+  // Generate the mathematical expression
+  const expression = selectedCoefficients.map(coef => coef + selectedArguments.map(arg => `-${arg}`).join(' * ')).join(' + ');
+  
+
+  
+  return {Arguments: selectedArguments, Expression: math.simplify(expression).toString()};
+}
+// PLEASE ^^^^^^^^
+
+
+
+function Text_Similarity(s1, s2) {
+  var longer = s1;
+  var shorter = s2;
+  if (s1.length < s2.length) {
+    longer = s2;
+    shorter = s1;
+  }
+  var longerLength = longer.length;
+  if (longerLength == 0) {
+    return 1.0;
+  }
+  return (longerLength - Distance_In_Text_Edits(longer, shorter)) / parseFloat(longerLength);
+}
+
+function Distance_In_Text_Edits(s1, s2) {
+  s1 = s1.toLowerCase();
+  s2 = s2.toLowerCase();
+
+  var costs = new Array();
+  for (var i = 0; i <= s1.length; i++) {
+    var lastValue = i;
+    for (var j = 0; j <= s2.length; j++) {
+      if (i == 0)
+        costs[j] = j;
+      else {
+        if (j > 0) {
+          var newValue = costs[j - 1];
+          if (s1.charAt(i - 1) != s2.charAt(j - 1))
+            newValue = Math.min(Math.min(newValue, lastValue),
+              costs[j]) + 1;
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+    }
+    if (i > 0)
+      costs[s2.length] = lastValue;
+  }
+  return costs[s2.length];
+}
+
+
+  
+
+
+
+const Input_Arena = document.querySelector("#Input_Arena");
+const Guess_Arena = document.querySelector("#Guess_Arena");
+const Guess_Button = document.querySelector("#Guess_Button");
+const Guess_Result = document.querySelector("#Guess_Result");
+const Change_Formula_Select = document.querySelector("#Change_Formula_Select");
+const Formula_Display = document.querySelector("#Formula_Display");
+const Coefficients_Display = document.querySelector("#Coefficients");
+const New_Game_Button = document.querySelector("#New_Game_Button");
+const Reveal_Answers_Button = document.querySelector("#Reveal_Answers_Button");
+const Reveal_Answers_Button_Contents = document.querySelector("#Reveal_Answers_Button_Contents");
+const Input_Arena_Secondary_Wrapper = document.querySelector("#Input_Arena_Secondary_Wrapper");
+const Guess_Result_Percentage = document.querySelector("#Guess_Result_Percentage");
+const Hack_Spacer_Element_Arena = document.querySelector("#Hack_Spacer_Element_Arena");
+const Change_BlackBox_Argument_Number_Select = document.querySelector("#Change_BlackBox_Argument_Number_Select");
+const Temporary_Invisible_Select_For_Sizing = document.querySelector("#Temporary_Invisible_Select_For_Sizing");
+let Invisible_Option = document.querySelector("#Invisible_Option");
+
+Populate_Change_BlackBox_Argument_Number_Select();
+
+Set_To_BlackBox_Mode();
+
+function Populate_Change_BlackBox_Argument_Number_Select() {
+
+
+let Max_Arguments = 3;
+let Argument_Letters = ['x', 'y', 'z', 'u', 'v', 'w'];
+let Width_At_First_Element = 0;
+
+for(Argument_Iterator = 1; Argument_Iterator <= Max_Arguments; ++Argument_Iterator) {
+
+  let Option_Element = document.createElement("option");
+  
+  Option_Element.dataset.Number_Of_Arguments = Argument_Iterator;
+
+  Option_Element.innerHTML = `${Argument_Iterator} argument${Argument_Iterator > 1 ? 's' : ''}&nbsp;&mdash;&nbsp;${Argument_Letters.slice(0, Argument_Iterator).join(',')}`;
+  Change_BlackBox_Argument_Number_Select.appendChild(Option_Element);
+}
+
+
+Change_BlackBox_Argument_Number_Select.style.width = Width_At_First_Element + 'px';
+console.log(Width_At_First_Element + 'px');
+
+
+
+Change_BlackBox_Argument_Number_Select.onchange = () => {
+
+ New_BlackBox_Mode_Game();
+}
+
+
+}
+
+
+function New_Game(Formula) { // start of motherfucking new game function
+ Hack_Spacer_Element_Arena.innerHTML = "";
+   Reveal_Answers_Button.disabled = false;
+Guess_Result_Wrapper.style.filter = "opacity(0)";
+Input_Arena.innerHTML = "";
+ Guess_Button.disabled=false;
+Guess_Result.innerHTML = "";
+ Coefficients_Display.innerHTML = "";
+ 
+     document.querySelector("#Formula_Display > p:nth-child(1)").innerHTML = `\\(${Formula.MathJAX},\\)`;
+    
+      if(window.MathJax){
+  MathJax.typesetPromise([document.querySelector("#Formula_Display > p:nth-child(1)")]).then(() => {}); 
+  }
+  
+  Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+ 
+  let Coefficient_Element = document.createElement("div");
+
+    let Coefficient_Label_Element = document.createElement("label");
+    Coefficient_Label_Element.innerHTML = `\\(${Coefficient.Name} = \\)&nbsp;&nbsp;`;
+    let Coefficient_Input_Element = document.createElement("input");
+        let Coefficient_Result_Element = document.createElement("span");
+    Coefficient_Result_Element.classList.add("material-icons");
+    Coefficient_Result_Element.dataset.Coefficient_Result_Identifier = Coefficient.Name;
+      Coefficient_Element.classList.add("Coefficient_Element");
+         Coefficient_Result_Element.classList.add("Coefficient_Result_Element");
+      Coefficient_Result_Element.innerHTML = "&nbsp;";
+    
+  Coefficient_Input_Element.type = 'text';
+    Coefficient_Input_Element.classList.add("Input_Number");
+      Coefficient_Input_Element.classList.add("Input_Number_Side");
+  Coefficient_Input_Element.dataset.identifier = Coefficient.Name;
+    Coefficient_Input_Element.addEventListener("focus", event => {
+    Guess_Result_Wrapper.style.filter = "opacity(0)";
+     Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+     document.querySelector(`[data-identifier='${Coefficient.Name}']`).style.backgroundColor = null;
+
+        document.querySelector(`[data--coefficient_-result_-identifier='${Coefficient.Name}']`).style.filter = "opacity(0)";
+ });
+    });
+    
+  Coefficient_Input_Element.addEventListener("keydown", event => {
+  
+
+  
+
+  
+  if(event.keyCode === 13) {
+  Handle_Guess_Button_Click();
+  }
+  });
+  Coefficient_Element.appendChild(Coefficient_Label_Element);
+    Coefficient_Element.appendChild(Coefficient_Input_Element);
+      Coefficient_Element.appendChild(Coefficient_Result_Element);
+  Coefficients_Display.appendChild(Coefficient_Element);
+  if(window.MathJax){
+  MathJax.typesetPromise([Coefficient_Label_Element]).then(() => {}); 
+  }
+  });
+  
+
+var Contemporary_Coefficients = {};
+ Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+    Contemporary_Coefficients[Coefficient.Name] = Random_Integer(Coefficient.Minimum, Coefficient.Maximum);
+ });
+ 
+   Reveal_Answers_Button.onclick = function () {
+   document.querySelectorAll(`[data--button_-identifier='Run_Function_Button']`).forEach(Run_Function_Button => {Run_Function_Button.disabled=true;});
+   Reveal_Answers_Button.disabled = true;
+      Guess_Result_Wrapper.style.filter = "opacity(0)";
+    Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+     document.querySelector(`[data-identifier='${Coefficient.Name}']`).style.backgroundColor = null;
+     
+        document.querySelector(`[data--coefficient_-result_-identifier='${Coefficient.Name}']`).style.filter = "opacity(0)";
+    document.querySelector(`[data-identifier='${Coefficient.Name}']`).value = Contemporary_Coefficients[Coefficient.Name];
+    Guess_Button.disabled=true;
+    document.querySelectorAll('input[type=number]').forEach(Number_Input => {Number_Input.disabled = true;});
+    });
+  }
+Guess_Button.onclick = Handle_Guess_Button_Click;
+function Handle_Guess_Button_Click () {
+  let Score = 0;
+      Guess_Result_Wrapper.style.filter = "opacity(1)";
+  Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+
+  if(  document.querySelector(`[data-identifier='${Coefficient.Name}']`).value.length > 0){
+  document.querySelector(`[data-identifier='${Coefficient.Name}']`).value = math.evaluate(document.querySelector(`[data-identifier='${Coefficient.Name}']`).value);
+
+  }
+        document.querySelector(`[data--coefficient_-result_-identifier='${Coefficient.Name}']`).style.filter = "opacity(1)";
+    if(parseInt(document.querySelector(`[data-identifier='${Coefficient.Name}']`).value) == Contemporary_Coefficients[Coefficient.Name]){
+      Score++;
+        document.querySelector(`[data-identifier='${Coefficient.Name}']`).style.backgroundColor = "#f0fff3";
+        document.querySelector(`[data--coefficient_-result_-identifier='${Coefficient.Name}']`).innerHTML = "&#xe5ca";
+    } else {
+    document.querySelector(`[data-identifier='${Coefficient.Name}']`).style.backgroundColor = "#fff0f0";
+           document.querySelector(`[data--coefficient_-result_-identifier='${Coefficient.Name}']`).innerHTML = "&#xe5cd";
+    }
+  });
+  Guess_Result_Percentage.innerHTML = 100 / Formula.Coefficients.length * Score + "%";
+  if(Score >= Formula.Coefficients.length) {
+    Guess_Result.innerHTML = "Correct";
+    
+    
+  //  ############################################## hack
+  let Formula_MathJax_With_Coefficients = Formula.MathJAX;
+  Object.keys(Contemporary_Coefficients).forEach((Contemporary_Coefficient, Iteration_Number) => {
+ Formula_MathJax_With_Coefficients = Formula_MathJax_With_Coefficients.replaceAll(Contemporary_Coefficient, Contemporary_Coefficients[Contemporary_Coefficient]);
+  });
+    document.querySelector("#Formula_Display > p:nth-child(1)").innerHTML = `\\(${Formula_MathJax_With_Coefficients},\\)`;
+    
+      if(window.MathJax){
+  MathJax.typesetPromise([document.querySelector("#Formula_Display > p:nth-child(1)")]).then(() => {}); 
+  }
+    //####################################################### end hack
+    
+     Guess_Button.disabled=true;
+    document.querySelectorAll('input[type=number]').forEach(Number_Input => {Number_Input.disabled = true;});
+       document.querySelectorAll(`[data--button_-identifier='Run_Function_Button']`).forEach(Run_Function_Button => {Run_Function_Button.disabled=true;});
+          document.querySelectorAll('input[type=text]').forEach(Number_Input => {Number_Input.disabled = true;});
+           Reveal_Answers_Button.disabled = true;
+  } else if(Score == 0) {
+    Guess_Result.innerHTML = "Incorrect";
+  } else {
+
+   Guess_Result.innerHTML = "Partially Correct";
+  }
+  
+  console.log(Contemporary_Coefficients);
+}
+
+Get_Input(Formula, Contemporary_Coefficients);
+} // end of motherfucking new game function
+
+// TO-DO ENABLE MATHS INPUT, LIKE FRACTIONS AND SIGMA SUMMATIONS
+function Set_To_Custom_Formula() {
+Input_Arena.innerHTML = "";
+Formula_Display.innerHTML = "";
+Formula_Display_Element = document.createElement('p');
+  Formula_Display_Element.innerHTML = `f(...) = ............`; // AUTO ADD LIMITS AND FORMAT
+  
+  Formula_Display.appendChild(Formula_Display_Element);
+  
+  
+  Coefficients_Display.innerHTML = "";
+  Guess_Button.style.filter = "opacity(0)";
+  Reveal_Answers_Button.disabled=true;
+   New_Game_Button.disabled=true;
+}
+
+function Set_Formula(Formula) {
+  Reveal_Answers_Button_Contents.innerHTML = "Reveal Coefficients";
+Input_Arena.innerHTML = "";
+Formula_Display.innerHTML = "";
+Formula_Display_Element = document.createElement('p');
+  Formula_Display_Element.innerHTML = `\\(${Formula.MathJAX},\\)`;
+  Formula_Display.appendChild(Formula_Display_Element);
+    Guess_Button.style.filter = "opacity(1)";
+ Reveal_Answers_Button.disabled=false;
+ New_Game_Button.disabled=false;
+  
+  Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+ 
+    let Coefficient_Display_Element = document.createElement("p");
+    // TO DO, group with commas
+    Coefficient_Display_Element.innerHTML = `\\(${Coefficient.Minimum} \\leqslant ${Coefficient.Name} \\leqslant ${Coefficient.Maximum}\\)${Iterations_Number != Formula.Coefficients.length-1 ? ',&nbsp;' : ''}`;
+  
+     Formula_Display.appendChild(Coefficient_Display_Element);
+ });
+  if(window.MathJax){
+  MathJax.typesetPromise([Formula_Display]).then(() => {});
+}
+
+New_Game_Button.onclick = () => {
+New_Game(Formula);
+
+}
+New_Game(Formula);
+
+
+}
+
+function New_BlackBox_Mode_Game() { // bb
+ Hack_Spacer_Element_Arena.innerHTML = "";
+
+const Random_Function = Generate_Random_Function(document.querySelector("#Change_BlackBox_Argument_Number_Select").selectedIndex + 1);
+
+let Random_Function_Rendered_As_Text =  `f(${Random_Function.Arguments.join(',')}) = ${Random_Function.Expression}`;
+
+ Formula_Display_Element.innerHTML = `\\(f(${Random_Function.Arguments.join(',')}) = \\text{?}\\)`;
+    if(window.MathJax){
+    MathJax.typesetPromise([Formula_Display_Element]).then(() => {});
+    }
+// DEBUG
+console.log(Random_Function_Rendered_As_Text);
+// \DEBUG
+  MathJax.typesetPromise([]).then(() => {}); 
+  
+  function Evaluate_The_Random_Function() {
+ let Function_Arguments = Array.from(arguments);
+let Argument_Letters =  ['x', 'y', 'z', 'u', 'v', 'w'];
+let Context = {};
+Function_Arguments.forEach((Argument, Argument_Iteration_Number) => {
+  Context[Argument_Letters[Argument_Iteration_Number]] = Argument;
+});
+
+  return math.evaluate(Random_Function.Expression, Context);
+  }
+  
+let Formula = {Inputs: Random_Function.Arguments, Coefficients: [], Evaluate_Function: Evaluate_The_Random_Function};
+
+   Reveal_Answers_Button.disabled = false;
+Guess_Result_Wrapper.style.filter = "opacity(0)";
+Input_Arena.innerHTML = "";
+ Guess_Button.disabled=false;
+Guess_Result.innerHTML = "";
+ Coefficients_Display.innerHTML = "";
+ 
+
+ 
+  let Formula_Guess_Element = document.createElement("div");
+
+    let Formula_Guess_Label_Element = document.createElement("label");
+    Formula_Guess_Label_Element.innerHTML = `\\(f(${Random_Function.Arguments.join(',')}) = \\)&nbsp;&nbsp;`;
+    let Formula_Guess_Input_Element = document.createElement("input");
+        let Formula_Guess_Result_Element = document.createElement("span");
+    Formula_Guess_Result_Element.classList.add("material-icons");
+    Formula_Guess_Result_Element.dataset.Formula_Guess_Result_Identifier = "Formula_Guess";
+      Formula_Guess_Element.classList.add("Coefficient_Element");
+         Formula_Guess_Result_Element.classList.add("Coefficient_Result_Element");
+      Formula_Guess_Result_Element.innerHTML = "&nbsp;";
+    
+  Formula_Guess_Input_Element.type = 'text';
+    Formula_Guess_Input_Element.classList.add("Input_Number");
+      Formula_Guess_Input_Element.classList.add("Input_Number_Side");
+  Formula_Guess_Input_Element.dataset.identifier = "Formula_Guess";
+ 
+    Formula_Guess_Input_Element.addEventListener("focus", event => {
+    Guess_Result_Wrapper.style.filter = "opacity(0)";
+    
+     Formula_Guess_Input_Element.style.backgroundColor = null;
+
+        Formula_Guess_Result_Element.style.filter = "opacity(0)";
+ 
+
+    });
+     
+  Formula_Guess_Input_Element.addEventListener("keydown", event => {
+  
+
+  
+
+  
+  if(event.keyCode === 13) {
+  Handle_Guess_Button_Click();
+  }
+  });
+  Formula_Guess_Element.appendChild(Formula_Guess_Label_Element);
+    Formula_Guess_Element.appendChild(Formula_Guess_Input_Element);
+      Formula_Guess_Element.appendChild(Formula_Guess_Result_Element);
+  Coefficients_Display.appendChild(Formula_Guess_Element);
+  if(window.MathJax){
+  MathJax.typesetPromise([Formula_Guess_Label_Element]).then(() => {}); 
+  }
+
+  
+
+
+ 
+   Reveal_Answers_Button.onclick = function () {
+    Formula_Display_Element.innerHTML = `\\(${Random_Function_Rendered_As_Text}\\)`;
+   
+    Formula_Guess_Input_Element.disabled = true;
+    Guess_Button.disabled = true;
+    document.querySelectorAll(`[data--button_-identifier='Run_Function_Button']`).forEach(Run_Function_Button => {Run_Function_Button.disabled=true;});
+   Reveal_Answers_Button.disabled = true;
+      Guess_Result_Wrapper.style.filter = "opacity(0)";
+         if(window.MathJax){
+    MathJax.typesetPromise([Formula_Display_Element]).then(() => {});
+    }
+    
+    document.querySelectorAll('.Input_Number').forEach(Input_Number => Input_Number.disabled = true);
+  }
+  
+Guess_Button.onclick = Handle_Guess_Button_Click;
+function Handle_Guess_Button_Click () {
+  let Score = 0;
+      Guess_Result_Wrapper.style.filter = "opacity(1)";
+
+        document.querySelector(`[data-identifier='Formula_Guess']`).style.filter = "opacity(1)";
+   
+
+ 
+ let Simplified_Algebra = math.simplify(document.querySelector(`[data-identifier='Formula_Guess']`).value).toString();
+     Formula_Guess_Input_Element.style.filter = "opacity(1)";
+     // hack
+     document.querySelector("#Coefficients > div > span").style.filter = "opacity(1)";
+     // end hack
+ if(math.symbolicEqual(Simplified_Algebra, Random_Function.Expression)){
+    Guess_Result.innerHTML = "Correct";
+      Guess_Result_Percentage.innerHTML = 100 + "%";
+      Formula_Guess_Input_Element.style.backgroundColor =    "#f0fff3";
+           Guess_Button.disabled=true;
+   Reveal_Answers_Button.disabled = true;
+     document.querySelector(`[data--formula_-guess_-result_-identifier='Formula_Guess']`).innerHTML = "&#xe5ca";
+     
+   document.querySelectorAll(`[data--button_-identifier='Run_Function_Button']`).forEach(Run_Function_Button => {Run_Function_Button.disabled=true;});
+          document.querySelectorAll('input[type=number]').forEach(Number_Input => {Number_Input.disabled = true;});
+              Formula_Display_Element.innerHTML = `\\(${Random_Function_Rendered_As_Text}\\)`;
+    if(window.MathJax){
+    MathJax.typesetPromise([Formula_Display_Element]).then(() => {});
+    }
+    } else {
+     Guess_Result.innerHTML = "Incorrect";
+       Guess_Result_Percentage.innerHTML = Text_Similarity(Simplified_Algebra, Random_Function.Expression).toFixed(1) * 100 + "%";
+             Formula_Guess_Input_Element.style.backgroundColor = "#fff0f0";
+             
+          
+           document.querySelector(`[data--formula_-guess_-result_-identifier="Formula_Guess"]`).innerHTML = "&#xe5cd";
+    }
+
+
+
+
+  
+    if(window.MathJax){
+    MathJax.typesetPromise([ document.querySelector(`[data-identifier='Formula_Guess']`)]).then(() => {});
+    }
+
+}
+
+Get_Input(Formula, []);
+} // /bb
+
+
+function Set_To_BlackBox_Mode() {
+Input_Arena.innerHTML = "";
+Formula_Display.innerHTML = "";
+Formula_Display_Element = document.createElement('p');
+  Formula_Display_Element.innerHTML = "";
+  
+  Formula_Display.appendChild(Formula_Display_Element);
+      if(window.MathJax){
+    MathJax.typesetPromise([Formula_Display_Element]).then(() => {});
+    }
+  
+  Coefficients_Display.innerHTML = "";
+
+  Reveal_Answers_Button_Contents.innerHTML = "Reveal Formula";
+   
+   New_Game_Button.onclick = New_BlackBox_Mode_Game;
+   New_BlackBox_Mode_Game();
+}
+
+
+function Add_Option_Element(Formula) {
+   let Option_Element = document.createElement("option");
+    Option_Element.innerHTML = Formula.Name; // + "&nbsp;&mdash;&nbsp;" + Formula.MathJAX;
+    Change_Formula_Select.appendChild(Option_Element);
+    return Option_Element;
+}
+
+// TO DO, CUSTOM EXERCISE LOGIC
+function Populate_Select() {
+
+  let BlackBox_Option = Add_Option_Element({Name: "BlackBox"});
+    
+   Change_Formula_Select.addEventListener("change", function (event) {
+      if(Change_Formula_Select.value == BlackBox_Option.value) {
+        Set_To_BlackBox_Mode();
+          document.title = "BlackBox";
+
+      }
+    });
+    
+    
+    
+  Formulae_Array.forEach(Formula => {
+ var Option_Element = Add_Option_Element(Formula);
+ Change_Formula_Select.addEventListener("change", function (event) {
+      if(Change_Formula_Select.value == Option_Element.value) {
+        Set_Formula(Formula);
+          document.title = Formula.Name;
+      }
+    });
+  });
+  
+  
+
+    
+    
+  return; // BREAK EXECUTION SO AS NOT TO SHOW PROTOTYPE CUSTOM OPTION
+  
+  let Custom_Option = Add_Option_Element({Name: "Custom"});
+   Change_Formula_Select.addEventListener("change", function (event) {
+      if(Change_Formula_Select.value == Custom_Option.value) {
+        Set_To_Custom_Formula();
+      }
+    });
+    
+}
+
+Populate_Select();
+
+
+
+function Get_Input(Formula, Contemporary_Coefficients) {
+  let Input_Box = document.createElement("div");
+  
+  Input_Box.style.filter = "opacity(0)";
+    
+   // setTimeout(()=>
+    //Input_Box.style.filter = "opacity(1)", 1);
+    
+  Input_Box.classList.add("Input_Box");
+  
+  let Start_Function = document.createElement("p");
+  Start_Function.innerHTML = `\\(f(\\)`;
+  
+  let Input_Elements = [];
+   let Input_Elements_And_Commas = [];
+  
+  function Handle_Run_Function_Button_Click () {
+    
+    
+    Input_Elements.forEach(Input_Element => {
+      if(!Number.isInteger(parseInt(Input_Element.value))){
+      Input_Element.value=0;
+      }
+    });
+    
+          let Result = Formula.Evaluate_Function.apply(null, Input_Elements.map(Input_Element => { 
+return parseInt(Input_Element.value);
+  }).concat(Object.values(Contemporary_Coefficients)));
+  
+  
+ if(!Number.isInteger(Result)){console.error("Result invalid");return;}
+ 
+ 
+      Function_Results_Box.innerHTML = "&nbsp;" + Result;
+      Get_Input(Formula, Contemporary_Coefficients);
+       Input_Elements.forEach(Input_Element => {
+Input_Element.disabled=true;
+  });
+      Run_Function_Button.remove();
+    };
+  Formula.Inputs.forEach((Input, Iteration_Number) => {
+  
+  let Input_Number = document.createElement("input");
+  Input_Number.type = 'number';
+  Input_Number.classList.add("Input_Number");
+
+Input_Number.placeholder = Input;
+
+Input_Number.addEventListener("focus", event => {
+
+Guess_Result_Wrapper.style.filter = "opacity(0)";
+     Formula.Coefficients.forEach((Coefficient, Iterations_Number) => {
+     document.querySelector(`[data-identifier='${Coefficient.Name}']`).style.backgroundColor = null;
+     document.querySelector(`[data--coefficient_-result_-identifier='${Coefficient.Name}']`).style.filter = "opacity(0)";
+     });
+});
+    Input_Number.addEventListener("keydown", event => {
+    
+    if(event.keyCode === 13) {
+      Handle_Run_Function_Button_Click();
+    }
+    });
+Input_Number.addEventListener('input', resizeInput); 
+resizeInput.call(Input_Number);
+
+Input_Elements.push(Input_Number);
+Input_Elements_And_Commas.push(Input_Number);
+if(Iteration_Number != Formula.Inputs.length - 1){
+let Comma_Element = document.createElement('p');
+Comma_Element.innerText = '\\(,\\)';
+Comma_Element.classList.add('Comma_Element');
+Input_Elements_And_Commas.push(Comma_Element);
+    
+    if(window.MathJax){
+    MathJax.typesetPromise([Comma_Element]).then(() => {});
+    }
+}
+
+});
+
+
+
+
+
+function resizeInput() {
+  this.style.width = Math.max(1, this.value.length)  + "ch";
+}
+  let End_Function = document.createElement("p");
+  End_Function.innerHTML = `\\() =\\)`;
+  
+  let Run_Function_Button = document.createElement("button");
+  Run_Function_Button.innerHTML = "Execute Function";
+  Run_Function_Button.dataset.Button_Identifier = "Run_Function_Button";
+  
+  let Function_Results_Box = document.createElement("p");
+  
+  Run_Function_Button.addEventListener("click", Handle_Run_Function_Button_Click);
+  
+    
+  
+  Input_Box.appendChild(Start_Function);
+  
+  
+  Input_Elements_And_Commas.forEach(Input_Element_Or_Comma => {
+  Input_Box.appendChild(Input_Element_Or_Comma);
+  });
+  
+
+  
+  Input_Box.appendChild(End_Function);
+   Input_Box.appendChild(Run_Function_Button);
+   Input_Box.appendChild(Function_Results_Box);
+   
+   
+    if(window.MathJax){
+
+
+  Input_Arena.appendChild(Input_Box);
+  
+  let Spacer_Hack_Element = Input_Box.cloneNode(true);
+  Spacer_Hack_Element.style.pointerEvents = "none";
+    Hack_Spacer_Element_Arena.appendChild(Spacer_Hack_Element);
+    
+  
+  
+   
+  
+   
+  Input_Arena_Secondary_Wrapper.style.left =  Input_Arena_Secondary_Wrapper.style.left ?  Input_Arena_Secondary_Wrapper.style.left  : (window.innerWidth / 4) - (Input_Box.getBoundingClientRect().width / 2) + "px";
+    
+    Input_Arena_Secondary_Wrapper.style.position = "absolute";
+     MathJax.typesetPromise([Start_Function]).then(() => {});
+     MathJax.typesetPromise([End_Function]).then(() => {});
+     
+     
+      Input_Box.style.filter = "opacity(1)";
+    
+    }
+    
+    
+    
+
+
+}
+
+
+
+
+document.querySelectorAll("select").forEach(Select_Element => {
+if(Select_Element.id=="Temporary_Invisible_Select_For_Sizing"){return;}
+Select_Element.addEventListener("change", ()=>{
+Invisible_Option.innerHTML = Select_Element.selectedOptions[0].innerHTML;
+
+Select_Element.style.width = Temporary_Invisible_Select_For_Sizing.offsetWidth + "px";
+
+Invisible_Option.innerHTML = "";
+});
+
+
+Invisible_Option.innerHTML = Select_Element.selectedOptions[0].innerHTML;
+
+Select_Element.style.width = Temporary_Invisible_Select_For_Sizing.offsetWidth+20 + "px";
+
+Invisible_Option.innerHTML = "";
+
+});
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Theme: Late Night -->
+
+<style>
+
+p {
+padding: 10px 0;
+}
+#Formula_Display {
+background: #fff7ed;
+z-index: 1;
+
+}
+
+#Change_Formula_Select_Wrapper, #Controls_Wrapper  {
+z-index:2 ;position: sticky; top:0;
+
+
+}
+
+button, select {
+    background: #e6e2de;
+
+    outline-color: #8a765b;
+      box-shadow: 0px 0px 0px 6px #fffff8;
+    padding: 10px;
+    margin:20px;
+    color: #3c3c3c;
+}
+
+select {
+    margin: 0;
+}
+
+#Main {
+margin-top: 20px;
+}
+
+.Arena_Of_Main {
+background: #ffffff;
+    border: 1px dotted tan;
+    margin: 0px 20px;
+    gap: 0px;
+    position: relative;
+    padding-top: 20px;
+    margin-bottom: 20px;
+      z-index: 0;
+}
+#Input_Arena_Wrapper {
+    background: #ffffff;
+      margin: 0px 20px;
+      flex-direction: column;
+      z-index: 0;
+      position: relative;
+    border: 1px dotted tan;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+button:disabled, select:disabled, input:disabled {
+    background: #fffff8 !important;
+    filter: opacity(0.25) !important;
+    
+}
+button:disabled:hover, select:disabled:hover, input:disabled:hover {
+    box-shadow: none !important;
+    outline-offset: 6px !important;
+      background: #fffff8 !important;
+    
+}
+button:hover, select:hover {
+    box-shadow: 0px 0px 0px 6px #ddd3c5;
+        background: #e3ddd5;
+
+    outline-offset: 10px;
+    outline-color: #f0eae1;
+}
+
+body, html {
+    background: #fffff8;
+    color: #3c3c3c;
+}
+
+* {
+    transition: all 300ms ease;
+}
+
+input {
+    border-radius: 8px;
+    padding: 10px !important;
+   background-color: #fdf8f1;
+    border-color: tan !important;
+}
+
+input:hover {
+  
+        background: #fff4e5 !important;
+ 
+    border-color: #b39a78 !important;
+}
+
+.Coefficient_Result_Element {
+    position: absolute;
+    right: 5%;
+    top: 25%;
+    color: #918677;
+}</style>
+</body>
+</html>
